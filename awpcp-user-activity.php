@@ -40,7 +40,7 @@ class USIN_AWPCP_User_Activity{
 			foreach ( $items as $awpcp_ad ) { 
 
 				if ( $awpcp_ad->ad_category_parent_id ) {
-					$category_name = get_adcatname( $awpcp_ad->ad_category_parent_id ) . '→';
+					$category_name = get_adcatname( $awpcp_ad->ad_category_parent_id ) . ' → ';
 				}
 				$category_name .= get_adcatname( $awpcp_ad->ad_category_id );
 				$title = "{$category_name}: \"{$awpcp_ad->ad_title}\"";
