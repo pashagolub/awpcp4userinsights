@@ -29,14 +29,6 @@ class USIN_AWPCP_User_Activity{
 			$items = awpcp_listings_collection()->find_listings_with_query( $args );			
 		}
 
-		error_log( print_r( array(
-						            'context' => array( 'public-listings', 'latest-listings-widget' ),
-						            'orderby' => 'renewed-date',
-						            'limit' => -1,
-						            'user_id' => $user_id,
-						            'disabled' => $disabled
-						        ) , true ) );
-
 		$count = count( $items );
 		if ( $count > 10 ) {
 			array_splice( $items, 10 ); //output only 10 last ads		
