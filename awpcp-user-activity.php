@@ -2,70 +2,67 @@
 
 class USIN_AWPCP_User_Activity{
 
-	protected $order_post_type;
-
-	public function __construct($order_post_type){
-		$this->order_post_type = $order_post_type;
-	}
 
 	public function init(){
-		add_filter('usin_user_activity', array($this, 'add_orders_to_user_activity'), 10, 2);
-		add_action('pre_get_posts', array($this, 'admin_orders_filter'));
+		add_filter('usin_user_activity', array($this, 'add_enabled_ads_to_user_activity'), 10, 2);
+		add_filter('usin_user_activity', array($this, 'add_disabled_ads_to_user_activity'), 10, 2);
 	}
-	
-	public function add_orders_to_user_activity($activity, $user_id){
 
-		$args = array(
-			'meta_key'    => '_customer_user',
-			'meta_value'  => $user_id,
-			'post_type'   => $this->order_post_type,
-			'post_status' => 'any',
-			'numberposts'=>-1
-		);
+	public function add_enabled_ads_to_user_activity( $activity, $user_id ){
+		return $this->add_ads_to_user_activity( $activity, $user_id, 0);
+	}
 
-		$all_orders = get_posts($args);
-		$count = sizeof($all_orders);
+	public function add_disabled_ads_to_user_activity( $activity, $user_id ){
+		return $this->add_ads_to_user_activity( $activity, $user_id, 1);	
+	}	
 
-		$args['numberposts'] = 5;
-		$orders = get_posts($args);
+	public function add_ads_to_user_activity( $activity, $user_id, $disabled ){
 
+		$args = array(  'context' => array( 'public-listings', 'latest-listings-widget' ),
+						'orderby' => 'renewed-date',
+						'limit' => -1,
+						'user_id' => $user_id,
+						'disabled' => $disabled
+						);
 
-		if(!empty($orders)){
+		if ( function_exists( 'awpcp_listings_collection' ) ) {
+			$items = awpcp_listings_collection()->find_listings_with_query( $args );			
+		}
+
+		error_log( print_r( array(
+						            'context' => array( 'public-listings', 'latest-listings-widget' ),
+						            'orderby' => 'renewed-date',
+						            'limit' => -1,
+						            'user_id' => $user_id,
+						            'disabled' => $disabled
+						        ) , true ) );
+
+		$count = count( $items );
+		if ( $count > 10 ) {
+			array_splice( $items, 10 ); //output only 10 last ads		
+		}
+			
+		if( !empty( $items ) ){
 			$list = array();
-			foreach ($orders as $order) {
+			
+			foreach ( $items as $awpcp_ad ) { 
 
-				$title = get_the_date( get_option('date_format'), $order->ID);
-
-				if(class_exists('WC_Order')){
-					$wc_order = new WC_Order($order->ID);
-
-					$order_status = $wc_order->get_status();
-					$order_items = $wc_order->get_items();
-
-					
-
-					if(!empty($order_items)){
-						$item_names = wp_list_pluck($order_items, 'name');
-
-						$title .= sprintf(' | %s: %s (%s)', 
-							__('Ordered Items', 'usin'), implode(', ', $item_names), $order_status);
-
-					}
-					
+				if ( $awpcp_ad->ad_category_parent_id ) {
+					$category_name = get_adcatname( $awpcp_ad->ad_category_parent_id ) . '→';
 				}
+				$category_name .= get_adcatname( $awpcp_ad->ad_category_id );
+				$title = "{$category_name}: \"{$awpcp_ad->ad_title}\"";
+				$link = add_query_arg( array( 'action' => 'view', 'id' => $awpcp_ad->ad_id ), awpcp_get_user_panel_url() );
 				
-				
-				$list[]=array('title'=>$title, 'link'=>get_edit_post_link( $order->ID, ''));
+				$list[] = array( 'title'=>$title, 'link'=>$link );
 			}
 
-			$post_type_data = get_post_type_object($this->order_post_type);
-
 			$activity[] = array(
-				'type' => 'order',
-				'for' => $this->order_post_type,
-				'label' => $count == 1 ? $post_type_data->labels->singular_name : $post_type_data->labels->name,
+				'type' => 'ads',
+				//'for' => $this->order_post_type,
+				'label' => ( $disabled ? 'Disabled ' : 'Enabled ' ) . 'Classifieds',
 				'count' => $count,
-				'link' => admin_url('edit.php?post_type=shop_order&usin_customer='.$user_id),
+				'link' => admin_url('admin.php?page=awpcp-panel'),
 				'list' => $list
 			);
 		}
@@ -73,15 +70,4 @@ class USIN_AWPCP_User_Activity{
 		return $activity;
 	}
 
-
-	public function admin_orders_filter($query){
-		if( is_admin() && isset($_GET['usin_customer']) && $query->get('post_type') == $this->order_post_type){
-			$user_id = intval($_GET['usin_customer']);
-
-			if($user_id){
-				$query->set('meta_key', '_customer_user');
-				$query->set('meta_value', $user_id);
-			}
-		}
-	}
 }
