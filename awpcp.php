@@ -1,4 +1,11 @@
 <?php
+/**
+ * Plugin Name: AWPCP integration for Users Insights
+ * Description: AWPCP integration for the Users Insights Wordpress plugin
+ * Version: 1.0
+ * Author: pashagolub
+ * 
+ */
 
 if(!defined( 'ABSPATH' )){
 	exit;
