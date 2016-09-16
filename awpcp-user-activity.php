@@ -44,7 +44,7 @@ class USIN_AWPCP_User_Activity{
 				}
 				$category_name .= get_adcatname( $awpcp_ad->ad_category_id );
 				$title = "{$category_name}: \"{$awpcp_ad->ad_title}\"";
-				$link = add_query_arg( array( 'action' => 'view', 'id' => $awpcp_ad->ad_id ), awpcp_get_user_panel_url() );
+				$link = add_query_arg( array( 'action' => 'view', 'id' => $awpcp_ad->ad_id ), awpcp_get_admin_listings_url() );
 				
 				$list[] = array( 'title'=>$title, 'link'=>$link );
 			}
