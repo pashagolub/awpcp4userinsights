@@ -1,4 +1,11 @@
 <?php
+/**
+ * Plugin Name: AWPCP integration for Users Insights
+ * Description: AWPCP integration for the Users Insights Wordpress plugin
+ * Version: 1.0
+ * Author: pashagolub
+ * 
+ */
 
 if(!defined( 'ABSPATH' )){
 	exit;
@@ -9,7 +16,7 @@ class USIN_AWPCP{
 	public function __construct(){
 		add_filter('usin_module_options', array($this , 'register_module'));
 
-		if(USIN_Helper::is_plugin_activated('another-wordpress-classifieds-plugin/awpcp.php')){
+		if($this->is_awpcp_active()){
 			add_action('usin_module_options_loaded', array($this, 'init'));
 			add_filter('usin_fields', array($this , 'register_fields'));
 		}
@@ -88,6 +95,18 @@ class USIN_AWPCP{
 		}
 
 		return $fields;
+	}
+	
+	protected function is_awpcp_active(){
+		$plugin = 'another-wordpress-classifieds-plugin/awpcp.php';
+		$activated = in_array( $plugin, apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) );
+		if(is_multisite() && !$activated){
+			$active_plugins = get_site_option('active_sitewide_plugins') ;
+			if(!empty($active_plugins) && isset($active_plugins[$plugin])){
+				$activated = true;
+			}
+		}
+		return $activated;
 	}
 
 }

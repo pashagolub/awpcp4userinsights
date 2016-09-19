@@ -1,6 +1,8 @@
 <?php
 
 class USIN_AWPCP_Query{
+	
+	protected $join_set = false;
 
 	public function init(){
 		add_filter('usin_db_map', array($this, 'filter_db_map'));
@@ -17,10 +19,11 @@ class USIN_AWPCP_Query{
 	public function filter_query_joins($query_joins, $table){
 		global $wpdb;
 
-		if($table === 'awpcp_ads'){
+		if(in_array($table, array('awpcp_ads', 'orders')) && !$this->join_set){
 			$query_joins .= " LEFT JOIN (SELECT count(ad_id) as ads_num, MAX(COALESCE(renewed_date,ad_postdate)) as last_ad,".
 				" SUM(IF(payment_status = 'Completed', ad_fee_paid, 0)) as ads_paid, user_id FROM {$wpdb->prefix}awpcp_ads ". 
 				" GROUP BY user_id) as orders ON $wpdb->users.ID = orders.user_id";
+			$this->join_set = true;
 		}
 		return $query_joins;
 	}
